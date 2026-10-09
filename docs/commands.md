@@ -121,3 +121,13 @@ python manage.py module-accounts-export-to-magento
 Requires `MAGENTO2_URL_FOR_CHECKOUT_EXPORT` and `MAGENTO2_TOKEN_FOR_CHECKOUT_EXPORT` to be set in settings. See [Configuration](./configuration/) for details.
 
 This command lives in the separate `entirius-django-accounts-export-to-magento-api` module. Install that module to use it.
+
+## Command Summary
+
+| Command | Description |
+|---------|-------------|
+| `accounts-import-from-csv` | Import customer accounts from CSV file (`--file_path`, defaults to `IMPORT_DIR/accounts/accounts.csv`) |
+| `addresses-import-from-csv` | Import customer addresses from CSV file |
+| `fill-accounts-product-representation-from-pim` | Sync ProductRepresentation cache from PIM data (`--pim_shop_idx`; requires the `pim` extra) |
+| `generate-api-admin-key` | Generate SHA256 APIAdminKey for a channel and save to file (`channel_idx`, `--file_path`); refuses when django-access is installed |
+| `module-accounts-export-to-magento` | Export accounts to Magento2 (empty command stub) |
