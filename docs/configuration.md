@@ -67,7 +67,7 @@ The module also reads these settings independently:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `JWT_REFRESH_LIFETIME` | `3` | Refresh token lifetime (days) used by internal token logic |
-| `JWT_SECRET` | (long default) | Secret key for JWT signing |
+| `JWT_SECRET` | **required** | Secret key for JWT signing; the module raises `OSError` on startup if missing |
 | `JWT_ALGORITHM` | `"HS256"` | JWT signing algorithm |
 
 ## Authentication Backend
@@ -241,3 +241,37 @@ Required only if using the `module-accounts-export-to-magento` command:
 MAGENTO2_URL_FOR_CHECKOUT_EXPORT = "https://magento.example.com"
 MAGENTO2_TOKEN_FOR_CHECKOUT_EXPORT = "magento-api-token"
 ```
+
+## Settings Reference
+
+Three settings raise `OSError` at import time if unset: `JWT_SECRET`, `PRIVATE_DIR` and `MIGRATION_0023_MECHANISM`.
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `PRIVATE_DIR` | **required** | Root for private file storage |
+| `MIGRATION_0023_MECHANISM` | **required** | Wishlist migration mode: 1=delete all, 2=multi-channel, 3=assign |
+| `T9N_DEFAULT_LANG` | `"pl"` | Fallback language for name_t9n resolution |
+| `EMAIL_DOUBLE_OPTIN` | `True` | Send confirmation email on signup |
+| `ACCOUNTS_CUSTOMER_IS_ACTIVE_WITHOUT_DOUBLE_OPTIN` | `False` | Auto-activate when double optin off |
+| `IS_ACTIVE_REQUIRED` | `True` | Block login if customer.is_active=False |
+| `IS_VERIFY_REQUIRED` | `False` | Block login if customer.is_verified=False |
+| `ACCOUNTS_PASSWORD_MIN_LENGTH` | `8` | Minimum password length |
+| `ACCOUNTS_PASSWORD_MIN_CAPITAL_LETTERS` | `1` | Capital letters required |
+| `ACCOUNTS_PASSWORD_MIN_SPECIAL_SYMBOLS` | `1` | Special symbols required |
+| `ACCOUNTS_PASSWORD_MIN_NUMBERS` | `1` | Numbers required |
+| `JWT_REFRESH_LIFETIME` | `3` | Refresh token lifetime in days |
+| `JWT_SECRET` | **required** | Secret for the short-lived social login token |
+| `JWT_ALGORITHM` | `"HS256"` | JWT signing algorithm |
+| `API_PUBLIC_BASE_URL` | `"api"` | Public URL prefix |
+| `API_ADMIN_BASE_URL` | `"api-admin"` | Admin URL prefix |
+| `NEW_ACCOUNT_REDIRECT_URL` | `None` | Email confirmation redirect URL |
+| `RESET_PASSWORD_REDIRECT_URL` | `None` | Password reset redirect URL |
+| `NEW_ADDRESS_SHOULD_BE_DEFAULT` | `False` | Auto-set new address as default |
+| `BILLING_ADDRESS_EDITABLE` | auto | `False` if django_regon_api installed, else `True` |
+| `BILLING_ADDRESS_PHONE_EDITABLE` | auto | `False` if django_regon_api installed, else `True` |
+| `ADMIN_DELETE_CUSTOMER_MAX_BATCH` | `5` | Max customers per admin delete request |
+| `WISHLIST_PRODUCT_PER_PAGE` | `30` | Wishlist pagination size |
+| `ACCOUNTS_CHANNEL_BLACKLIST` | `{}` | `{channel_idx: [blacklisted_channel_idxs]}` applied on signup |
+| `SPECIFY_KEYS_EXTRA_PROFILE_DATA_IN_API` | `None` | Whitelist keys from customer.extra in profile API |
+| `MAGENTO2_URL_FOR_CHECKOUT_EXPORT` | `None` | Magento2 export endpoint |
+| `MAGENTO2_TOKEN_FOR_CHECKOUT_EXPORT` | `None` | Magento2 export API token |
