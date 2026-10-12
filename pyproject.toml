@@ -1,7 +1,21 @@
 [project]
 name = "entirius-django-accounts"
 version = "5.0.1"
-description = "Accounts Django module for Volkanos"
+description = "Customer accounts for Entirius: registration, JWT login, address book, wishlist and social login"
+keywords = ["django", "accounts", "authentication", "jwt", "ecommerce", "entirius"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+]
 authors = [{ name = "Entirius" }]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -40,7 +54,11 @@ test = [
 pim = ["entirius-django-pim>=3.0.0"]
 
 [project.urls]
+Homepage = "https://docs.entirius.com/"
+Documentation = "https://github.com/entirius/entirius-django-accounts/tree/develop/docs"
 Repository = "https://github.com/entirius/entirius-django-accounts"
+Changelog = "https://github.com/entirius/entirius-django-accounts/blob/develop/CHANGELOG.md"
+Issues = "https://github.com/entirius/entirius-django-accounts/issues"
 
 [build-system]
 requires = ["hatchling"]
