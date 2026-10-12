@@ -107,13 +107,16 @@ def token_create(request, *args, **kwargs):
     except Throttled as exc:
         return _throttled(request, exc)
 
-    check_channel_acl(kwargs["channel"], serializer.user.customer)
-    check_if_active(serializer.user.customer)
-    check_if_verified(serializer.user.customer)
+    customer = getattr(serializer.user, "customer", None)
+    if customer is None:  # valid login without a Customer profile (e.g. a staff-only account)
+        raise Forbidden(message="Account has no customer profile.", status="user_not_customer")
+    check_channel_acl(kwargs["channel"], customer)
+    check_if_active(customer)
+    check_if_verified(customer)
 
     tokens = serializer.validated_data
-    uid = serializer.user.customer.uid
-    request.customer = serializer.user.customer
+    uid = customer.uid
+    request.customer = customer
     res_body = dict(customer_id=uid, **tokens)
     return Response(res_body, status="CREATED", message="token created successfully")
 

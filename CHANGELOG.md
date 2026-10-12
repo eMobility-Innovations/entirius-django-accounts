@@ -27,6 +27,9 @@
   echo, `uid` and `confirmation_key` are unchanged).
 - Fix `PATCH customer/<uid>/profile/` answering 200 without saving: `firstname` and
   `lastname` now land on the user's `first_name` / `last_name`, `sex` on the customer.
+- `customer/tokens/` answers 403 `user_not_customer` instead of 500 when the login is valid but the
+  user has no Customer profile (e.g. a staff-only account).
+- Docs: `JWTAccessBackend` in `AUTHENTICATION_BACKENDS` is required for the customer endpoints.
 
 ## 5.0.1 — 2026-07-13
 

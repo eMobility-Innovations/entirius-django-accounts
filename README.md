@@ -50,6 +50,16 @@ MIGRATION_0023_MECHANISM = 1        # wishlist restructuring mode; 1 on a fresh 
 `JWT_SECRET`, `PRIVATE_DIR` and `MIGRATION_0023_MECHANISM` are read at import time and the module refuses to start
 without them. Settings reference: https://github.com/entirius/entirius-django-accounts/blob/develop/docs/configuration.md
 
+Register the JWT backend, or every customer endpoint behind `@authenticate` (`customer/me/`,
+profile, addresses, wishlist, password change, logout) answers 401 even with a valid token:
+
+```python
+AUTHENTICATION_BACKENDS = [
+    "django_accounts.backends.JWTAccessBackend",
+    "django.contrib.auth.backends.ModelBackend",  # Django admin login
+]
+```
+
 The customer-delete admin endpoint takes a key. Where `entirius-django-access` is installed (the backend service
 installs it when available) the key is an access token:
 

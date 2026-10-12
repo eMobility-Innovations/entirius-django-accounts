@@ -110,8 +110,13 @@ The ten most used; full reference in `docs/configuration.md`.
 | `API_ADMIN_BASE_URL` | `"api-admin"` | Admin URL prefix |
 | `T9N_DEFAULT_LANG` | `"pl"` | Fallback language for name_t9n resolution |
 
+`AUTHENTICATION_BACKENDS` must list `django_accounts.backends.JWTAccessBackend` before `ModelBackend`
+(nothing checks it at boot; see Gotchas).
+
 ## Gotchas
 
+- v1 customer views use `@authenticate` → `django.contrib.auth.authenticate(request)`, which only tries `AUTHENTICATION_BACKENDS`. Without `JWTAccessBackend` registered the Bearer token is never read and every customer endpoint is 401
+- `customer/tokens/` for a valid login without a `Customer` (staff-only user) is 403 `user_not_customer`
 - `customer/tokens/` is the CMS staff login: with `django_access` installed it runs access' failed-login guard
   (`django_access.services.login_guard`, the counters of the service's `api/token/`; settings
   `AUTH_TOKEN_*`) — 429 + `Retry-After` before the password check; without access no limit
