@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from django_accounts.api.admin.pagination import AdminPageNumberPagination
+from django_accounts.schemas.responses.customer import CustomerListItem
 from django_accounts.services import admin_service
 
 _ADMIN_AUTH = [JWTAuthentication]
@@ -30,6 +31,7 @@ def _parse_bool(value: str | None) -> bool | None:
         summary="List customers",
         description="Paginated customer list with search and filters.",
         tags=["Customers"],
+        responses=CustomerListItem,
         parameters=[
             OpenApiParameter(name="search", description="Search by email or name", type=str),
             OpenApiParameter(name="group", description="Filter by group code", type=str),

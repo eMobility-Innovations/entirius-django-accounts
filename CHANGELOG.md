@@ -21,6 +21,8 @@
   upgrade they erase only there. An unpinned token, and the path without django-access, still erase in every channel.
 - A staff account created through django-access (`staff_user_created`) gets its `Customer` (active, verified) and a
   verified primary e-mail address — the rows the CMS login on `customer/tokens/` reads.
+- OpenAPI: the admin customer list is generated as `accounts_v2_admin_customers_list` and documents its
+  paginated response. Metadata only.
 
 ## 5.0.1 — 2026-07-13
 
