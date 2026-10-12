@@ -65,7 +65,7 @@ AUTHENTICATION_BACKENDS = [
 
 ### v1 (Public)
 
-Customer-facing endpoints under `/api/accounts/v1/{channel}/` for registration, login, profile, addresses, and wishlists. Legacy admin endpoint at `/api-admin/accounts/v1/{channel}/customer/delete`.
+Customer-facing endpoints under `/api/accounts/v1/{channel}/` for registration, login, profile, addresses, and wishlists. Legacy admin endpoint at `/api-admin/accounts/v1/{channel}/customer/delete` (GDPR erase by e-mail): with `django_access` a channel-pinned `accounts.erase` token deletes only customers registered in that channel (`source_channel`); an unpinned token, or the legacy key without `django_access`, deletes in every channel.
 
 ### v2 Admin (Read-Only)
 

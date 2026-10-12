@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import os
+from importlib.util import find_spec
 
 import dj_database_url
 
@@ -50,6 +51,9 @@ INSTALLED_APPS = [
     "django_accounts",
     "drf_spectacular",
 ]
+# Soft dependency: with django-access importable (zeno) keys are checked as access tokens.
+if find_spec("django_access") and not os.environ.get("ENTIRIUS_TEST_NO_ACCESS"):
+    INSTALLED_APPS.append("django_access")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
