@@ -1,6 +1,6 @@
 [project]
 name = "entirius-django-accounts"
-version = "5.0.1"
+version = "6.0.0"
 description = "Customer accounts for Entirius: registration, JWT login, address book, wishlist and social login"
 keywords = ["django", "accounts", "authentication", "jwt", "ecommerce", "entirius"]
 classifiers = [
