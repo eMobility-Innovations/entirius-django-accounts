@@ -23,6 +23,8 @@
   verified primary e-mail address — the rows the CMS login on `customer/tokens/` reads.
 - OpenAPI: the admin customer list is generated as `accounts_v2_admin_customers_list` and documents its
   paginated response. Metadata only.
+- `customer/signup/` no longer echoes the plaintext password in its response (the rest of the request
+  echo, `uid` and `confirmation_key` are unchanged).
 
 ## 5.0.1 — 2026-07-13
 

@@ -249,6 +249,8 @@ def account_create(request, *args, **kwargs):
             )
 
         data_res = json.loads(request.body)
+        # The response echoes the request: never send the plaintext password back.
+        data_res.pop("password", None)
         if settings.EMAIL_DOUBLE_OPTIN:
             data_res["confirmation_key"] = confirmation.key
         data_res["uid"] = uid
