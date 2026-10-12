@@ -5,6 +5,7 @@
 import json
 import logging
 
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django_utils.api.decorators import (
     api_view,
@@ -14,8 +15,8 @@ from django_utils.api.decorators import (
     save_ip_and_country,
 )
 from django_utils.api.exceptions import Forbidden
-from django_utils.api.responses import Response
-from rest_framework.exceptions import AuthenticationFailed
+from django_utils.api.responses import Response, to_json_response
+from rest_framework.exceptions import AuthenticationFailed, Throttled
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import (
@@ -26,6 +27,7 @@ from rest_framework_simplejwt.serializers import (
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from django_accounts import settings
+from django_accounts.utils.api_keys import access_installed
 from django_accounts.utils.decorators import channel_view
 
 logger = logging.getLogger(__name__)
@@ -54,23 +56,56 @@ def check_channel_acl(channel, customer):
         raise Forbidden(message=w, status="user_not_allowed_in_channel")
 
 
+def _login_guard():
+    """access' failed-login guard (``django_access.services.login_guard``); None without access — no limit."""
+    if not access_installed():
+        return None
+    from django_access.services import login_guard
+
+    return login_guard
+
+
+def _throttled(request, exc: Throttled) -> JsonResponse:
+    """The 429 of ``api/token/``: status, ``Retry-After`` and DRF's detail, in this API's envelope."""
+    request.customer = None  # nothing for save_ip_and_country to record
+    response = to_json_response(
+        Response({"detail": str(exc.detail)}, status="ERR", message="throttled", status_code=429)
+    )
+    response["Retry-After"] = str(exc.wait)
+    return response
+
+
+def _obtain_pair(request, data: dict) -> TokenObtainPairSerializer:
+    """The checked token pair; with access, a blocked login raises ``Throttled`` before the password is checked."""
+    username, guard = str(data.get("email") or "").strip(), _login_guard()
+    if guard:
+        guard.refuse_when_blocked(request, username)
+    serializer = TokenObtainPairSerializer(data=dict(username=data.get("email"), password=data.get("password")))
+    try:
+        serializer.is_valid(raise_exception=True)
+    except AuthenticationFailed as e:
+        logger.exception(e)
+        if guard:
+            guard.record_failure(request, username)
+        raise Forbidden(message="Incorrect username or password", status=e.get_full_details()["code"])
+    except Exception as e:
+        logger.exception(e)
+        raise Forbidden(message="Got undefined error")
+    if guard:
+        guard.clear(request, username)
+    return serializer
+
+
 @api_view
 @channel_view
 @csrf_exempt
 @require_http_method("POST")
 @save_ip_and_country
 def token_create(request, *args, **kwargs):
-    data = json.loads(request.body)
-    serializer_data = dict(username=data.get("email"), password=data.get("password"))
-    serializer = TokenObtainPairSerializer(data=serializer_data)
     try:
-        serializer.is_valid(raise_exception=True)
-    except AuthenticationFailed as e:
-        logger.exception(e)
-        raise Forbidden(message="Incorrect username or password", status=e.get_full_details()["code"])
-    except Exception as e:
-        logger.exception(e)
-        raise Forbidden(message="Got undefined error")
+        serializer = _obtain_pair(request, json.loads(request.body))
+    except Throttled as exc:
+        return _throttled(request, exc)
 
     check_channel_acl(kwargs["channel"], serializer.user.customer)
     check_if_active(serializer.user.customer)

@@ -13,6 +13,7 @@ from process_logger import ProcessLogger
 
 from django_accounts.models import Customer
 from django_accounts.services.customer import CustomerService
+from django_accounts.utils.api_keys import erase_channel
 from django_accounts.utils.decorators import admin_view
 
 logger = ProcessLogger("ACCOUNTS_ADMIN_VIEW", module="django_accounts")
@@ -37,6 +38,8 @@ def admin_customer_delete(request: WSGIRequest, *args, **kwargs):
         raise BadRequest(message="Invalid JSON in request body")
 
     customers = Customer.objects.filter(user__email=email)
+    if (channel := erase_channel(request)) is not None:
+        customers = customers.filter(source_channel=channel)
     if not customers.exists():
         raise NotFound(message="Customer account not found")
 
