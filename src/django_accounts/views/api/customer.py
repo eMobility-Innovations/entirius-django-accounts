@@ -97,10 +97,15 @@ def customer_profile(request, uid=None, *args, **kwargs):
             user_dirty = False
             customer_dirty = False
 
-            for field in ["firstname", "lastname", "sex", "language"]:
+            # API names → model fields: names live on User, sex on Customer.
+            for field, attr in [("firstname", "first_name"), ("lastname", "last_name")]:
                 if data.get(field) is not None:
-                    setattr(request.user, field, data.get(field))
+                    setattr(request.user, attr, data[field])
                     user_dirty = True
+
+            if data.get("sex") is not None:
+                customer.sex = data["sex"]
+                customer_dirty = True
 
             if "extra" in data and isinstance(data["extra"], dict):
                 whitelist = settings.SPECIFY_KEYS_EXTRA_PROFILE_DATA_IN_API

@@ -25,6 +25,8 @@
   paginated response. Metadata only.
 - `customer/signup/` no longer echoes the plaintext password in its response (the rest of the request
   echo, `uid` and `confirmation_key` are unchanged).
+- Fix `PATCH customer/<uid>/profile/` answering 200 without saving: `firstname` and
+  `lastname` now land on the user's `first_name` / `last_name`, `sex` on the customer.
 
 ## 5.0.1 — 2026-07-13
 
