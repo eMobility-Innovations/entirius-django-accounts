@@ -63,3 +63,20 @@ class TestSignupResponse:
         assert "password" not in data
         assert data["uid"]
         assert User.objects.get(email="direct@example.com").check_password(PASSWORD)
+
+    def test_double_optin_without_redirect_url_answers_a_clean_500(self, channel, monkeypatch, caplog):
+        monkeypatch.setattr(accounts_settings, "EMAIL_DOUBLE_OPTIN", True)
+        monkeypatch.setattr(accounts_settings, "NEW_ACCOUNT_REDIRECT_URL", None)
+        sent = []
+        monkeypatch.setattr(customer_views, "NewAccountEmail", type("Stub", (_MailStub,), {"send": sent.append}))
+
+        resp = _signup(channel, "unconfigured@example.com")
+
+        assert resp.status_code == 500
+        meta = resp.json()["meta"]
+        assert meta["status"] == "NOT_CONFIGURED"
+        assert meta["message"] == "Account registration is not available"
+        assert "NEW_ACCOUNT_REDIRECT_URL" not in resp.content.decode()
+        assert sent == []
+        assert not User.objects.filter(email="unconfigured@example.com").exists()
+        assert "NEW_ACCOUNT_REDIRECT_URL is not set" in caplog.text

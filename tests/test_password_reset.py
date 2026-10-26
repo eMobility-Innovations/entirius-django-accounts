@@ -95,3 +95,23 @@ class TestPasswordResetKey:
         assert resp.json()["meta"]["status"] == "invalid_key"
         customer.user.refresh_from_db()
         assert not customer.user.check_password(NEW_PASSWORD)
+
+
+@pytest.mark.django_db
+class TestPasswordResetNotConfigured:
+    def test_unset_redirect_url_answers_a_clean_500_without_mail(self, customer, channel, monkeypatch, caplog):
+        monkeypatch.setattr(accounts_settings, "RESET_PASSWORD_REDIRECT_URL", None)
+        monkeypatch.setattr(customer_views, "ResetPasswordEmail", _MailStub)
+        _MailStub.links = []
+
+        resp = Client().post(
+            _base(channel), data=json.dumps({"email": customer.user.email}), content_type="application/json"
+        )
+
+        assert resp.status_code == 500
+        meta = resp.json()["meta"]
+        assert meta["status"] == "NOT_CONFIGURED"
+        assert meta["message"] == "Password reset is not available"
+        assert "RESET_PASSWORD_REDIRECT_URL" not in resp.content.decode()
+        assert _MailStub.links == []
+        assert "RESET_PASSWORD_REDIRECT_URL is not set" in caplog.text
