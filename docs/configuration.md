@@ -163,7 +163,13 @@ URL parameter key names (added to reset links):
 | `NEW_ACCOUNT_REDIRECT_URL_PARAM_KEY` | `"key"` | Query param name for the verification key |
 | `NEW_ACCOUNT_REDIRECT_URL_PARAM_UID` | `"uid"` | Query param name for user ID |
 | `RESET_PASSWORD_REDIRECT_URL_PARAM_KEY` | `"key"` | Query param name for password reset key |
-| `RESET_PASSWORD_EMAIL_LIFETIME` | `timedelta(days=7)` | Password reset link validity |
+| `RESET_PASSWORD_EMAIL_LIFETIME` | `timedelta(days=7)` | Not read by the reset link (see below) |
+
+A password reset link works once: setting the password, or a password change by any other route, ends it. So does
+anything else Django's reset token is bound to: a change of the account's e-mail, or a login that records
+`last_login` (the Django admin login does).
+It expires after allauth's `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS` or Django's `PASSWORD_RESET_TIMEOUT` (3 days
+each by default), whichever comes first.
 
 ## Social Login (Google / Facebook)
 

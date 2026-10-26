@@ -2,6 +2,12 @@
 
 ## 6.0.1rc1
 
+- Security: a password reset link works once. Its key was the signed e-mail address pk, so the same link set the
+  password again and again for 3 days, and the signup confirmation key of allauth (the same pk under the same salt)
+  was a valid reset key too. The key now carries a Django password reset token (bound to the password) and is
+  signed under its own salt. Reset links sent before the upgrade stop working; the customer requests
+  a new one.
+
 ## 6.0.0 — 2026-10-12
 
 - Access: the module declares its own access areas on its AppConfig and its admin views (copied from the
