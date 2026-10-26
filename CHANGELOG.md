@@ -1,5 +1,7 @@
 # Changelog
 
+## 6.0.1rc1
+
 ## 6.0.0 — 2026-10-12
 
 - Access: the module declares its own access areas on its AppConfig and its admin views (copied from the
