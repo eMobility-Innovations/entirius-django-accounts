@@ -7,6 +7,9 @@
   was a valid reset key too. The key now carries a Django password reset token (bound to the password) and is
   signed under its own salt. Reset links sent before the upgrade stop working; the customer requests
   a new one.
+- Docs: `RESET_PASSWORD_EMAIL_LIFETIME` was documented as the reset link's validity (7 days); the link never read
+  it. A link expires after `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS` or `PASSWORD_RESET_TIMEOUT` (3 days each by
+  default), whichever comes first, and ends on a password change, an e-mail change or a login that records `last_login`.
 
 ## 6.0.0 — 2026-10-12
 
