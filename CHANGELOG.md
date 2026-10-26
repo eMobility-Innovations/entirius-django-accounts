@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 6.0.1rc1
 
 - Security: a password reset link works once. Its key was the signed e-mail address pk, so the same link set the
   password again and again for 3 days, and the signup confirmation key of allauth (the same pk under the same salt)
