@@ -2,6 +2,13 @@
 
 ## 6.0.1rc1
 
+- Security: the signup response no longer carries `confirmation_key`. With `EMAIL_DOUBLE_OPTIN` on, the caller got
+  the key of the confirmation link and could activate an account on an address it does not own
+  (`customer/signup/<uid>/?key=...`), without the mail. The key now reaches the customer only in the mail; the
+  response keeps `uid`. A client that confirmed from the response (tests did) reads the link from the mail.
+- Security: `customer/signup/<uid>/?key=...` activates only the customer the key's address belongs to. It confirmed
+  the key's address and activated whichever `uid` the path named, so one's own key from one's own mail activated
+  another customer (signup returns `uid`). A key of another address answers 403 `invalid_key`.
 - Security: a password reset link works once. Its key was the signed e-mail address pk, so the same link set the
   password again and again for 3 days, and the signup confirmation key of allauth (the same pk under the same salt)
   was a valid reset key too. The key now carries a Django password reset token (bound to the password) and is
