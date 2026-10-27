@@ -32,6 +32,8 @@ class AccountsConfig(AppConfig):
     access_route_rules = []
 
     def ready(self) -> None:
+        from django_accounts import checks  # noqa: F401 — registers the configuration checks
+
         if apps.is_installed("django_access"):
             from django_access.signals import staff_user_created
 

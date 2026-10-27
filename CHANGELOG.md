@@ -10,6 +10,14 @@
 - Docs: `RESET_PASSWORD_EMAIL_LIFETIME` was documented as the reset link's validity (7 days); the link never read
   it. A link expires after `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS` or `PASSWORD_RESET_TIMEOUT` (3 days each by
   default), whichever comes first, and ends on a password change, an e-mail change or a login that records `last_login`.
+- An unset `RESET_PASSWORD_REDIRECT_URL` (or `NEW_ACCOUNT_REDIRECT_URL` with `EMAIL_DOUBLE_OPTIN`) no longer
+  surfaces as an unexplained 500: `customer/password/reset/` and `customer/signup/` answer 500 with
+  `meta.status` `NOT_CONFIGURED`, log the missing setting and send no mail. A dict-shaped URL with no entry and no
+  `"default"` for the customer's language/channel gets the same answer instead of a link with a dict in it.
+- System checks `django_accounts.W001` (`RESET_PASSWORD_REDIRECT_URL` unset) and `django_accounts.W002`
+  (`NEW_ACCOUNT_REDIRECT_URL` unset with `EMAIL_DOUBLE_OPTIN` on) warn at deploy time; warnings only, `migrate`
+  still runs. Deployments without them must set the storefront URLs.
+- Docs: `CMS_RESET_PASSWORD_REDIRECT_URL` (staff reset link to the admin CMS) and the dict shape of the redirect URLs.
 
 ## 6.0.0 — 2026-10-12
 
