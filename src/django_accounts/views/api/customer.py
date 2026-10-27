@@ -276,8 +276,7 @@ def account_create(request, *args, **kwargs):
         data_res = json.loads(request.body)
         # The response echoes the request: never send the plaintext password back.
         data_res.pop("password", None)
-        if settings.EMAIL_DOUBLE_OPTIN:
-            data_res["confirmation_key"] = confirmation.key
+        # Never the confirmation key: it reaches the customer only in the mail, or double opt-in proves nothing.
         data_res["uid"] = uid
     return Response(data_res, status="CREATED", message="account created successfully")
 
@@ -290,14 +289,14 @@ def customer_create_confirm(request, uid, *args, **kwargs):
         data = request.GET
         key = data.get("key")
         confirmation = EmailConfirmationHMAC.from_key(key)
-        if confirmation is not None:
-            confirmation.confirm(request)
-            customer = Customer.objects.get(uid=uid)
-            customer.is_active = True
-            customer.save()
-        else:
+        customer = Customer.objects.get(uid=uid)
+        # The key confirms one address: it activates only the customer that address belongs to.
+        if confirmation is None or confirmation.email_address.user_id != customer.user_id:
             e = "Invalid key"
             raise Forbidden(message=e, status="invalid_key")
+        confirmation.confirm(request)
+        customer.is_active = True
+        customer.save()
         data = {"message": "Your account has been successfully verified"}
         return Response(data)
     except Exception as e:
