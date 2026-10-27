@@ -135,26 +135,43 @@ Module-specific email settings:
 
 ## Email Redirect URLs
 
-Emails sent by the module (password reset, new account) contain links to the frontend. Configure the base URLs:
+Emails sent by the module (password reset, new account) contain links to the frontend. Configure the base URLs —
+`RESET_PASSWORD_REDIRECT_URL` is required for `customer/password/reset/`, `NEW_ACCOUNT_REDIRECT_URL` for
+`customer/signup/` while `EMAIL_DOUBLE_OPTIN` is on:
 
 ```python
 RESET_PASSWORD_REDIRECT_URL = "https://example.com/pw-reset"
 NEW_ACCOUNT_REDIRECT_URL = "https://example.com/"
 ```
 
-Both settings accept a string or a dict for per-language or per-channel control:
+Both settings accept a string or a dict for per-language or per-channel control: the top level is keyed by the
+customer's language (iso2), a nested dict by channel idx, and `"default"` is the fallback at either level:
 
 ```python
 RESET_PASSWORD_REDIRECT_URL = {
     "pl": {
         "channel1": "https://example.com/pl/pw-reset",
-        "channel2": "https://example.com/pl/pw-reset",
+        "default": "https://example.com/pl/pw-reset",
     },
     "en": {
         "channel1": "https://example.com/en/pw-reset",
     },
+    "default": "https://example.com/pw-reset",
 }
 ```
+
+`CMS_RESET_PASSWORD_REDIRECT_URL` (same shape, default `None`) is used instead for staff accounts, so their link opens
+the admin CMS; unset, staff get the storefront link.
+
+A URL is the page that receives the key: the link is `<url>?key=<key>` (signup: `<url>?key=<key>&uid=<uid>`).
+An unset setting, or a dict with no entry and no `"default"` for the customer's language/channel, answers the request
+with a 500 (`meta.status` `NOT_CONFIGURED`, the setting name only in the server log) and sends no mail. The system
+checks warn at deploy time (`manage.py check`, `migrate`, django-munin config health):
+
+| Check | When |
+|-------|------|
+| `django_accounts.W001` | `RESET_PASSWORD_REDIRECT_URL` is not set |
+| `django_accounts.W002` | `NEW_ACCOUNT_REDIRECT_URL` is not set while `EMAIL_DOUBLE_OPTIN` is on |
 
 URL parameter key names (added to reset links):
 
@@ -163,7 +180,13 @@ URL parameter key names (added to reset links):
 | `NEW_ACCOUNT_REDIRECT_URL_PARAM_KEY` | `"key"` | Query param name for the verification key |
 | `NEW_ACCOUNT_REDIRECT_URL_PARAM_UID` | `"uid"` | Query param name for user ID |
 | `RESET_PASSWORD_REDIRECT_URL_PARAM_KEY` | `"key"` | Query param name for password reset key |
-| `RESET_PASSWORD_EMAIL_LIFETIME` | `timedelta(days=7)` | Password reset link validity |
+| `RESET_PASSWORD_EMAIL_LIFETIME` | `timedelta(days=7)` | Not read by the reset link (see below) |
+
+A password reset link works once: setting the password, or a password change by any other route, ends it. So does
+anything else Django's reset token is bound to: a change of the account's e-mail, or a login that records
+`last_login` (the Django admin login does).
+It expires after allauth's `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS` or Django's `PASSWORD_RESET_TIMEOUT` (3 days
+each by default), whichever comes first.
 
 ## Social Login (Google / Facebook)
 
@@ -268,8 +291,9 @@ Three settings raise `OSError` at import time if unset: `JWT_SECRET`, `PRIVATE_D
 | `JWT_ALGORITHM` | `"HS256"` | JWT signing algorithm |
 | `API_PUBLIC_BASE_URL` | `"api"` | Public URL prefix |
 | `API_ADMIN_BASE_URL` | `"api-admin"` | Admin URL prefix |
-| `NEW_ACCOUNT_REDIRECT_URL` | `None` | Email confirmation redirect URL |
-| `RESET_PASSWORD_REDIRECT_URL` | `None` | Password reset redirect URL |
+| `NEW_ACCOUNT_REDIRECT_URL` | `None` | Email confirmation redirect URL; required with `EMAIL_DOUBLE_OPTIN` (check `W002`) |
+| `RESET_PASSWORD_REDIRECT_URL` | `None` | Password reset redirect URL; required (check `W001`) |
+| `CMS_RESET_PASSWORD_REDIRECT_URL` | `None` | Password reset redirect URL for staff accounts (admin CMS) |
 | `NEW_ADDRESS_SHOULD_BE_DEFAULT` | `False` | Auto-set new address as default |
 | `BILLING_ADDRESS_EDITABLE` | auto | `False` if django_regon_api installed, else `True` |
 | `BILLING_ADDRESS_PHONE_EDITABLE` | auto | `False` if django_regon_api installed, else `True` |

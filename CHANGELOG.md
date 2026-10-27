@@ -1,5 +1,31 @@
 # Changelog
 
+## 6.0.1 — 2026-10-27
+
+- Security: the signup response no longer carries `confirmation_key`. With `EMAIL_DOUBLE_OPTIN` on, the caller got
+  the key of the confirmation link and could activate an account on an address it does not own
+  (`customer/signup/<uid>/?key=...`), without the mail. The key now reaches the customer only in the mail; the
+  response keeps `uid`. A client that confirmed from the response (tests did) reads the link from the mail.
+- Security: `customer/signup/<uid>/?key=...` activates only the customer the key's address belongs to. It confirmed
+  the key's address and activated whichever `uid` the path named, so one's own key from one's own mail activated
+  another customer (signup returns `uid`). A key of another address answers 403 `invalid_key`.
+- Security: a password reset link works once. Its key was the signed e-mail address pk, so the same link set the
+  password again and again for 3 days, and the signup confirmation key of allauth (the same pk under the same salt)
+  was a valid reset key too. The key now carries a Django password reset token (bound to the password) and is
+  signed under its own salt. Reset links sent before the upgrade stop working; the customer requests
+  a new one.
+- Docs: `RESET_PASSWORD_EMAIL_LIFETIME` was documented as the reset link's validity (7 days); the link never read
+  it. A link expires after `ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS` or `PASSWORD_RESET_TIMEOUT` (3 days each by
+  default), whichever comes first, and ends on a password change, an e-mail change or a login that records `last_login`.
+- An unset `RESET_PASSWORD_REDIRECT_URL` (or `NEW_ACCOUNT_REDIRECT_URL` with `EMAIL_DOUBLE_OPTIN`) no longer
+  surfaces as an unexplained 500: `customer/password/reset/` and `customer/signup/` answer 500 with
+  `meta.status` `NOT_CONFIGURED`, log the missing setting and send no mail. A dict-shaped URL with no entry and no
+  `"default"` for the customer's language/channel gets the same answer instead of a link with a dict in it.
+- System checks `django_accounts.W001` (`RESET_PASSWORD_REDIRECT_URL` unset) and `django_accounts.W002`
+  (`NEW_ACCOUNT_REDIRECT_URL` unset with `EMAIL_DOUBLE_OPTIN` on) warn at deploy time; warnings only, `migrate`
+  still runs. Deployments without them must set the storefront URLs.
+- Docs: `CMS_RESET_PASSWORD_REDIRECT_URL` (staff reset link to the admin CMS) and the dict shape of the redirect URLs.
+
 ## 6.0.0 — 2026-10-12
 
 - Access: the module declares its own access areas on its AppConfig and its admin views (copied from the

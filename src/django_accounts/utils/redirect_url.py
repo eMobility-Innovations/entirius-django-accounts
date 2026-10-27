@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+from django.core.exceptions import ImproperlyConfigured
+
 
 def get_url_from_dict(dictionary: dict, key: str) -> str | dict | None:
     return dictionary.get(key, dictionary) if key is not None else None
@@ -12,6 +14,8 @@ def get_redirect_url(
     lang_iso2: str | None = None,
     channel_idx: str | None = None,
     channel_lang_iso2: str | None = None,
+    *,
+    setting_name: str = "redirect URL setting",
 ) -> str:
     """
     Funkcja zwraca URL przekierowania na podstawie parametrów językowych i kanału.
@@ -19,7 +23,7 @@ def get_redirect_url(
     """
 
     if main_url is None:
-        raise Exception("settings variable not set in settings.py")
+        raise ImproperlyConfigured(f"{setting_name} is not set")
 
     if not isinstance(main_url, dict):
         return main_url
@@ -37,6 +41,8 @@ def get_redirect_url(
         result = get_url_from_dict(result, "default")
 
     url = result if result is not None else main_url
-    if url is None:
-        raise Exception("settings variable not set in settings.py")
+    if not isinstance(url, str):
+        raise ImproperlyConfigured(
+            f"{setting_name} has no URL for language {lang_iso2!r} / channel {channel_idx!r} and no 'default'"
+        )
     return url

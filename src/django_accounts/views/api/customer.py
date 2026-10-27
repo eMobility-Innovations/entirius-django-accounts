@@ -9,7 +9,7 @@ from json import JSONDecodeError
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import get_password_validators, validate_password
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
@@ -24,7 +24,7 @@ from django_utils.api.decorators import (
     require_http_method,
     verify_captcha,
 )
-from django_utils.api.exceptions import BadRequest, Forbidden
+from django_utils.api.exceptions import APIException, BadRequest, Forbidden
 from django_utils.api.responses import Response
 from process_logger import ProcessLogger
 
@@ -38,6 +38,21 @@ from django_accounts.utils.redirect_url import get_redirect_url
 
 logger = logging.getLogger(__name__)
 process_logger = ProcessLogger("ACCOUNTS_CUSTOMER_VIEW", module="django_accounts")
+
+
+class NotConfigured(APIException):
+    """A deployment setting the request needs is missing; the client never sees which one."""
+
+    status = "NOT_CONFIGURED"
+    status_code = 500
+
+
+def _redirect_url(setting_name: str, client_message: str, **kwargs) -> str:
+    try:
+        return get_redirect_url(getattr(settings, setting_name), setting_name=setting_name, **kwargs)
+    except ImproperlyConfigured as exc:
+        logger.error("Accounts redirect URL misconfigured: %s", exc)
+        raise NotConfigured(message=client_message) from None
 
 
 @api_view
@@ -223,8 +238,13 @@ def account_create(request, *args, **kwargs):
         if settings.EMAIL_DOUBLE_OPTIN:
             uid = customer_create(request, user, phone, area_code, created_at, updated_at, lang, is_active, channel)
             confirmation = EmailConfirmationHMAC(user_email)
-            main_url = settings.NEW_ACCOUNT_REDIRECT_URL
-            main_url = get_redirect_url(main_url, lang.iso2, channel.idx, channel.language.iso2)
+            main_url = _redirect_url(
+                "NEW_ACCOUNT_REDIRECT_URL",
+                "Account registration is not available",
+                lang_iso2=lang.iso2,
+                channel_idx=channel.idx,
+                channel_lang_iso2=channel.language.iso2,
+            )
 
             param_key = settings.NEW_ACCOUNT_REDIRECT_URL_PARAM_KEY
             param_uid = settings.NEW_ACCOUNT_REDIRECT_URL_PARAM_UID
@@ -256,8 +276,7 @@ def account_create(request, *args, **kwargs):
         data_res = json.loads(request.body)
         # The response echoes the request: never send the plaintext password back.
         data_res.pop("password", None)
-        if settings.EMAIL_DOUBLE_OPTIN:
-            data_res["confirmation_key"] = confirmation.key
+        # Never the confirmation key: it reaches the customer only in the mail, or double opt-in proves nothing.
         data_res["uid"] = uid
     return Response(data_res, status="CREATED", message="account created successfully")
 
@@ -270,14 +289,14 @@ def customer_create_confirm(request, uid, *args, **kwargs):
         data = request.GET
         key = data.get("key")
         confirmation = EmailConfirmationHMAC.from_key(key)
-        if confirmation is not None:
-            confirmation.confirm(request)
-            customer = Customer.objects.get(uid=uid)
-            customer.is_active = True
-            customer.save()
-        else:
+        customer = Customer.objects.get(uid=uid)
+        # The key confirms one address: it activates only the customer that address belongs to.
+        if confirmation is None or confirmation.email_address.user_id != customer.user_id:
             e = "Invalid key"
             raise Forbidden(message=e, status="invalid_key")
+        confirmation.confirm(request)
+        customer.is_active = True
+        customer.save()
         data = {"message": "Your account has been successfully verified"}
         return Response(data)
     except Exception as e:
@@ -314,10 +333,16 @@ def customer_reset_password(request, *args, **kwargs):
     channel_lang_iso2 = channel.language.iso2 if channel.language else lang_iso2
 
     if user.is_staff and settings.CMS_RESET_PASSWORD_REDIRECT_URL:
-        main_url = settings.CMS_RESET_PASSWORD_REDIRECT_URL
+        setting_name = "CMS_RESET_PASSWORD_REDIRECT_URL"
     else:
-        main_url = settings.RESET_PASSWORD_REDIRECT_URL
-    main_url = get_redirect_url(main_url, lang_iso2, channel.idx, channel_lang_iso2)
+        setting_name = "RESET_PASSWORD_REDIRECT_URL"
+    main_url = _redirect_url(
+        setting_name,
+        "Password reset is not available",
+        lang_iso2=lang_iso2,
+        channel_idx=channel.idx,
+        channel_lang_iso2=channel_lang_iso2,
+    )
 
     param_key = settings.RESET_PASSWORD_REDIRECT_URL_PARAM_KEY
     confirmation = EmailChangePasswordHMAC(email)
