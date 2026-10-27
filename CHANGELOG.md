@@ -1,6 +1,6 @@
 # Changelog
 
-## 6.0.1rc1
+## 6.0.1 — 2026-10-27
 
 - Security: the signup response no longer carries `confirmation_key`. With `EMAIL_DOUBLE_OPTIN` on, the caller got
   the key of the confirmation link and could activate an account on an address it does not own
