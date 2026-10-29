@@ -11,6 +11,7 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
+from django.utils.crypto import get_random_string
 from django_regional.models import Language
 
 from django_accounts import settings
@@ -38,13 +39,18 @@ def read_from_csv(absolute_path: AnyStr, quotechar: str = '"') -> (list, AnyStr)
     return data, "Loaded"
 
 
+_RANDOM_CHARS = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789[~!@#$%^&*()_+{}\":;'[]"
+
+
+def random_password() -> str:
+    """Password for an account the user never typed one for (Django 5 removed make_random_password)."""
+    return get_random_string(20, _RANDOM_CHARS)
+
+
 def create_user(email, name="", last_name=""):
     email = email.lower()
     user = User.objects.create_user(username=email, email=email, first_name=name, last_name=last_name)
-    password = User.objects.make_random_password(
-        length=20, allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789[~!@#$%^&*()_+{}\":;'[]"
-    )
-    user.set_password(password)
+    user.set_password(random_password())
     user.save()
     user_email = EmailAddress(user=user, email=email, verified=True, primary=True)
     user_email.save()

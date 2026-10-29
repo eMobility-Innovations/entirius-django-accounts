@@ -251,6 +251,24 @@ ACCOUNTS_CHANNEL_BLACKLIST = {
 }
 ```
 
+## Throttling
+
+Login (`customer/tokens/`), signup and password reset are throttled with DRF's cache-based throttles. Rates are
+read from `REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]`; a missing or malformed scope keeps the default.
+
+| Scope | Default | Key |
+|---|---|---|
+| `accounts_login_ip` | `30/min` | client IP |
+| `accounts_signup_ip` | `10/hour` | client IP |
+| `accounts_signup_email` | `3/hour` | SHA-256 of the lower-cased email |
+| `accounts_password_reset_ip` | `10/hour` | client IP |
+| `accounts_password_reset_email` | `3/hour` | SHA-256 of the lower-cased email |
+
+The client IP comes from `django_utils.api.client_ip`: the `request.META` key named by `CLIENT_IP_HEADER`
+(e.g. `"HTTP_CF_CONNECTING_IP"`) when set, else DRF's `get_ident` (`NUM_PROXIES`). Set the header only when the
+origin is reachable through that proxy alone. Counters live in the default cache; use a shared one for several
+processes. A throttled call answers 429 with `Retry-After`.
+
 ## Miscellaneous
 
 | Setting | Default | Description |

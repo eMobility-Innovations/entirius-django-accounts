@@ -26,6 +26,7 @@ from django_accounts.dto.social_login import (
 from django_accounts.jwt import TokenAccessSocialLogin
 from django_accounts.models import Customer
 from django_accounts.models.socials import SocialLoginProviders
+from django_accounts.services.accounts_service import random_password
 
 User = get_user_model()
 import logging
@@ -298,11 +299,7 @@ def facebook_login_callback(request, provider):
             customer, is_created_customer = Customer.objects.update_or_create(user=user)
             uid = user.customer.uid
             if is_created_user:
-                password = User.objects.make_random_password(
-                    length=20,
-                    allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789[~!@#$%^&*()_+{}\":;'[]",
-                )
-                user.set_password(password)
+                user.set_password(random_password())
                 user.save()
 
             refresh = RefreshToken.for_user(user)
@@ -407,11 +404,7 @@ def google_login_callback(request, provider):
             customer, is_created_customer = Customer.objects.update_or_create(user=user)
             uid = user.customer.uid
             if is_created_user:
-                password = User.objects.make_random_password(
-                    length=20,
-                    allowed_chars="abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789[~!@#$%^&*()_+{}\":;'[]",
-                )
-                user.set_password(password)
+                user.set_password(random_password())
                 user.save()
 
             refresh = RefreshToken.for_user(user)

@@ -35,6 +35,13 @@ from django_accounts.utils.change_password import EmailChangePasswordHMAC
 from django_accounts.utils.decorators import channel_view
 from django_accounts.utils.params import PatchProfileRequestData, ResetPasswordRequestData
 from django_accounts.utils.redirect_url import get_redirect_url
+from django_accounts.utils.throttling import (
+    PasswordResetEmailThrottle,
+    PasswordResetIPThrottle,
+    SignupEmailThrottle,
+    SignupIPThrottle,
+    throttle,
+)
 
 logger = logging.getLogger(__name__)
 process_logger = ProcessLogger("ACCOUNTS_CUSTOMER_VIEW", module="django_accounts")
@@ -172,6 +179,7 @@ def customer_create(request, user, phone, area_code, created_at, updated_at, lan
 @api_view
 @csrf_exempt
 @channel_view
+@throttle(SignupIPThrottle, SignupEmailThrottle)
 @verify_captcha
 @require_http_method("POST")
 def account_create(request, *args, **kwargs):
@@ -307,6 +315,7 @@ def customer_create_confirm(request, uid, *args, **kwargs):
 @api_view
 @csrf_exempt
 @channel_view
+@throttle(PasswordResetIPThrottle, PasswordResetEmailThrottle)
 @require_http_method("POST")
 @parse_body(ResetPasswordRequestData.Schema)
 def customer_reset_password(request, *args, **kwargs):

@@ -5,7 +5,6 @@
 import json
 import logging
 
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django_utils.api.decorators import (
     api_view,
@@ -15,7 +14,7 @@ from django_utils.api.decorators import (
     save_ip_and_country,
 )
 from django_utils.api.exceptions import Forbidden
-from django_utils.api.responses import Response, to_json_response
+from django_utils.api.responses import Response
 from rest_framework.exceptions import AuthenticationFailed, Throttled
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import TokenError
@@ -29,6 +28,7 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from django_accounts import settings
 from django_accounts.utils.api_keys import access_installed
 from django_accounts.utils.decorators import channel_view
+from django_accounts.utils.throttling import LoginIPThrottle, throttle, throttled_response
 
 logger = logging.getLogger(__name__)
 
@@ -65,16 +65,6 @@ def _login_guard():
     return login_guard
 
 
-def _throttled(request, exc: Throttled) -> JsonResponse:
-    """The 429 of ``api/token/``: status, ``Retry-After`` and DRF's detail, in this API's envelope."""
-    request.customer = None  # nothing for save_ip_and_country to record
-    response = to_json_response(
-        Response({"detail": str(exc.detail)}, status="ERR", message="throttled", status_code=429)
-    )
-    response["Retry-After"] = str(exc.wait)
-    return response
-
-
 def _obtain_pair(request, data: dict) -> TokenObtainPairSerializer:
     """The checked token pair; with access, a blocked login raises ``Throttled`` before the password is checked."""
     username, guard = str(data.get("email") or "").strip(), _login_guard()
@@ -100,12 +90,13 @@ def _obtain_pair(request, data: dict) -> TokenObtainPairSerializer:
 @channel_view
 @csrf_exempt
 @require_http_method("POST")
+@throttle(LoginIPThrottle)
 @save_ip_and_country
 def token_create(request, *args, **kwargs):
     try:
         serializer = _obtain_pair(request, json.loads(request.body))
     except Throttled as exc:
-        return _throttled(request, exc)
+        return throttled_response(request, exc.wait, str(exc.detail))
 
     customer = getattr(serializer.user, "customer", None)
     if customer is None:  # valid login without a Customer profile (e.g. a staff-only account)
