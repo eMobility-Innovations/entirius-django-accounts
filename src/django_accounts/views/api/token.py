@@ -27,7 +27,7 @@ from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from django_accounts import settings
 from django_accounts.utils.api_keys import access_installed
-from django_accounts.utils.decorators import channel_view
+from django_accounts.utils.decorators import channel_view, require_native_auth
 from django_accounts.utils.throttling import LoginIPThrottle, throttle, throttled_response
 
 logger = logging.getLogger(__name__)
@@ -87,6 +87,7 @@ def _obtain_pair(request, data: dict) -> TokenObtainPairSerializer:
 
 
 @api_view
+@require_native_auth
 @channel_view
 @csrf_exempt
 @require_http_method("POST")

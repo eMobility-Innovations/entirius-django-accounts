@@ -6,10 +6,23 @@ from functools import wraps
 
 from django.core.exceptions import ObjectDoesNotExist
 from django_utils.api.decorators import api_view
-from django_utils.api.exceptions import NotFound, Unauthorized
+from django_utils.api.exceptions import Forbidden, NotFound, Unauthorized
 
+from django_accounts import settings
 from django_accounts.models import Channel
 from django_accounts.utils.api_keys import ERASE_SCOPE, key_is_valid
+
+
+def require_native_auth(view):
+    """Allow credential endpoints only when the deployment enables native accounts."""
+
+    @wraps(view)
+    def _wrapped(request, *args, **kwargs):
+        if not settings.ACCOUNTS_NATIVE_AUTH_ENABLED:
+            raise Forbidden(message="Native account authentication is disabled.", status="native_auth_disabled")
+        return view(request, *args, **kwargs)
+
+    return _wrapped
 
 
 def channel_view(view):

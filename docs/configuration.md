@@ -321,3 +321,19 @@ Three settings raise `OSError` at import time if unset: `JWT_SECRET`, `PRIVATE_D
 | `SPECIFY_KEYS_EXTRA_PROFILE_DATA_IN_API` | `None` | Whitelist keys from customer.extra in profile API |
 | `MAGENTO2_URL_FOR_CHECKOUT_EXPORT` | `None` | Magento2 export endpoint |
 | `MAGENTO2_TOKEN_FOR_CHECKOUT_EXPORT` | `None` | Magento2 export API token |
+
+## External-SSO-only deployments
+
+`ACCOUNTS_NATIVE_AUTH_ENABLED` defaults to `True`, preserving existing behavior.
+Set it to `False` to disable native password login, signup and signup confirmation,
+password reset and reset confirmation, and password changes. These endpoints stay
+registered and return HTTP 403 with `meta.status` `native_auth_disabled`, before
+processing credentials or sending email.
+
+This setting does not disable external/social SSO, staff provisioning, bearer-token
+customer/profile endpoints, or JWT refresh, validation and blacklisting. An SSO
+session can therefore continue refreshing and logging out normally.
+
+The reset/signup redirect-URL checks do not require storefront URLs while these
+native flows are disabled. Do not use placeholder URLs to configure an SSO-only
+service. Re-enabling native flows also re-enables their redirect-URL requirements.
