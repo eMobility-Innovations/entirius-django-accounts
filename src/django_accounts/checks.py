@@ -21,6 +21,8 @@ URL_SHAPE = (
 @checks.register("entirius_config", CODE)
 def redirect_urls_configured(app_configs=None, **kwargs) -> list[checks.CheckMessage]:
     """The reset and signup mails are built from these URLs: without them the request fails with a 500."""
+    if not settings.ACCOUNTS_NATIVE_AUTH_ENABLED:
+        return []
     messages = []
     if settings.RESET_PASSWORD_REDIRECT_URL is None:
         messages.append(

@@ -32,7 +32,7 @@ from django_accounts import settings
 from django_accounts.models import Channel, Customer
 from django_accounts.services.customer import CustomerService
 from django_accounts.utils.change_password import EmailChangePasswordHMAC
-from django_accounts.utils.decorators import channel_view
+from django_accounts.utils.decorators import channel_view, require_native_auth
 from django_accounts.utils.params import PatchProfileRequestData, ResetPasswordRequestData
 from django_accounts.utils.redirect_url import get_redirect_url
 from django_accounts.utils.throttling import (
@@ -177,6 +177,7 @@ def customer_create(request, user, phone, area_code, created_at, updated_at, lan
 
 
 @api_view
+@require_native_auth
 @csrf_exempt
 @channel_view
 @throttle(SignupIPThrottle, SignupEmailThrottle)
@@ -290,6 +291,7 @@ def account_create(request, *args, **kwargs):
 
 
 @api_view
+@require_native_auth
 @csrf_exempt
 @require_http_method("POST")
 def customer_create_confirm(request, uid, *args, **kwargs):
@@ -313,6 +315,7 @@ def customer_create_confirm(request, uid, *args, **kwargs):
 
 
 @api_view
+@require_native_auth
 @csrf_exempt
 @channel_view
 @throttle(PasswordResetIPThrottle, PasswordResetEmailThrottle)
@@ -367,6 +370,7 @@ def customer_reset_password(request, *args, **kwargs):
 
 
 @api_view
+@require_native_auth
 @csrf_exempt
 @require_http_method("POST")
 def customer_reset_password_confirm(request, key=None, *args, **kwargs):
@@ -401,6 +405,7 @@ def customer_reset_password_confirm(request, key=None, *args, **kwargs):
 
 
 @api_view
+@require_native_auth
 @csrf_exempt
 @authenticate
 @require_authentication

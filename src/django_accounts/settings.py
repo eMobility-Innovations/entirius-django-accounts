@@ -12,6 +12,7 @@ DEBUG = getattr(settings, "DEBUG", False)
 # API
 PUBLIC_BASE_URL = getattr(settings, "API_PUBLIC_BASE_URL", "api").strip("/")
 ADMIN_BASE_URL = getattr(settings, "API_ADMIN_BASE_URL", "api-admin").strip("/")
+ACCOUNTS_NATIVE_AUTH_ENABLED = getattr(settings, "ACCOUNTS_NATIVE_AUTH_ENABLED", True)
 
 # EMAIL SETTINGS
 EMAIL_DOUBLE_OPTIN = getattr(settings, "EMAIL_DOUBLE_OPTIN", True)
