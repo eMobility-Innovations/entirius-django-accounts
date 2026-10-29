@@ -1,5 +1,30 @@
 # Changelog
 
+## 6.0.2 — 2026-10-29
+
+- Security: login, signup and password reset are throttled. Before, only `customer/tokens/` with `django_access`
+  installed had a limit; signup and `customer/password/reset/` could be hammered for mail bombing and account
+  enumeration, and a captcha is no defence (`django_captcha` is optional). Over the limit the endpoint answers 429
+  with `Retry-After`, in the usual envelope (`meta.message` `throttled`). Scopes and default rates:
+
+  | Endpoint | Scope | Default |
+  |---|---|---|
+  | `customer/tokens/` | `accounts_login_ip` | `30/min` per IP |
+  | `customer/signup/` | `accounts_signup_ip` | `10/hour` per IP |
+  | `customer/signup/` | `accounts_signup_email` | `3/hour` per email |
+  | `customer/password/reset/` | `accounts_password_reset_ip` | `10/hour` per IP |
+  | `customer/password/reset/` | `accounts_password_reset_email` | `3/hour` per email |
+
+  Override a scope in `REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]`; a missing or malformed value keeps the default
+  (a throttle is never switched off by a typo). The per-email counters key on a SHA-256 of the lower-cased address,
+  never the address. Counters live in the default Django cache: use a shared one (Redis) when the service runs
+  several processes.
+- Per-IP throttles resolve the client through `django_utils.api.client_ip`: behind Cloudflare or a load balancer set
+  `CLIENT_IP_HEADER` (e.g. `"HTTP_CF_CONNECTING_IP"`) in the service, otherwise `REMOTE_ADDR` / `DRF_NUM_PROXIES`
+  decide, and every visitor behind a proxy shares one counter. Trust the header only when the origin is reachable
+  through that proxy alone.
+- Requires `entirius-django-utils>=2.4.1`.
+
 ## 6.0.1 — 2026-10-27
 
 - Security: the signup response no longer carries `confirmation_key`. With `EMAIL_DOUBLE_OPTIN` on, the caller got

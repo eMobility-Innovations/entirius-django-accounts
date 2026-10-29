@@ -8,6 +8,7 @@ import pytest
 from allauth.account.models import EmailAddress
 from django.apps import apps
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -24,6 +25,14 @@ def import_keys_into_access() -> None:
         from django_access.services.legacy import import_legacy_keys
 
         import_legacy_keys()
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    """Throttle counters live in the cache; one test's requests must not count against the next."""
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture
