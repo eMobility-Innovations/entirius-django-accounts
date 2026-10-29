@@ -38,7 +38,7 @@ dependencies = [
     "entirius-py-process-logger>=2.0.0",
     "entirius-django-email>=4.0.0",
     "entirius-django-regional>=2.0.1",
-    "entirius-django-utils>=2.4.1",
+    "entirius-django-utils>=2.4.2",
 ]
 
 [project.optional-dependencies]

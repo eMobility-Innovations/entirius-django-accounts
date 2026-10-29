@@ -24,6 +24,10 @@
   decide, and every visitor behind a proxy shares one counter. Trust the header only when the origin is reachable
   through that proxy alone.
 - Requires `entirius-django-utils>=2.4.1`.
+- Fix: `create_user` and Google/Facebook social login of a new user crashed with `AttributeError` on Django 5.0+
+  (`User.objects.make_random_password` was removed there). The random password now comes from
+  `django.utils.crypto.get_random_string` (20 chars, same alphabet).
+- Requires `entirius-django-utils>=2.4.2` (client IP behind a proxying storefront: `CLIENT_IP_TRUSTED_PROXIES`).
 
 ## 6.0.1 — 2026-10-27
 
