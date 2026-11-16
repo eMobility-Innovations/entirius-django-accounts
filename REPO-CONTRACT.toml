@@ -1,0 +1,34 @@
+# THE REPO CONTRACT — what this repo is, what it does, and what proves it.
+
+[repo]
+name         = "entirius-django-accounts"
+what_it_is   = "A reusable Django app (package entirius-django-accounts) providing customer accounts, authentication and profile flows for Entirius storefronts."
+what_it_does = """
+Customer registration, login, password and e-mail flows (django-allauth based), profile and
+address data, and the switch that disables native authentication for SSO deployments. It is
+deployed only as a dependency of the storefront services that install it, so a vulnerable
+dependency locked here reaches every one of them.
+"""
+owner        = "eMobility-Innovations infrastructure — operator patryk"
+status       = "active"
+
+[rules]
+must = [
+  "The suite runs against POSTGRES, never SQLite (tests/settings.py reads DATABASE_URL; verify.sh points it at the runner's Postgres)",
+  "Each verify.sh run uses its own uniquely-named database, so concurrent runs on one runner never share data",
+  "uv.lock is committed and verify.sh syncs it --frozen, so the gate tests exactly the locked dependency set",
+]
+
+[tests]
+command = "./verify.sh"
+suite   = "tests"
+covers  = """
+The pytest-django suite under tests/ exercises the account models, native-auth disable mode,
+allauth integration and the access ownership rules against a real Postgres.
+"""
+coverage_floor = 80
+
+[runner]
+# The suite needs a Postgres SERVER: pytest-django creates the test database before any test.
+toolchains     = ["python@3.12", "postgres@16"]
+postgres_roles = ["entirius_accounts_test"]
